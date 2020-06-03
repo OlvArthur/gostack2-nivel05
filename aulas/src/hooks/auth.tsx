@@ -5,6 +5,7 @@ import api from '../services/api';
 interface User {
   name: string;
   id: string;
+  email: string;
   avatar_url: string;
 }
 

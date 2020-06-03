@@ -36,6 +36,17 @@ export const Profile = styled.div`
   align-items: center;
   margin-left: 80px;
 
+  a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
   img {
     border-radius: 50%;
     width: 56px;
