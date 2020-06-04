@@ -3,7 +3,7 @@ import { FiArrowLeft, FiMail, FiUser, FiLock, FiCamera } from 'react-icons/fi';
 import { Form } from '@unform/web';
 import * as Yup from 'yup';
 import { FormHandles } from '@unform/core';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 import api from '../../services/api';
 
@@ -20,8 +20,8 @@ interface ProfileFormData {
   name: string;
   email: string;
   old_password: string;
-  new_password: string;
-  confirm_password: string;
+  password: string;
+  password_confirmation: string;
 }
 
 const Profile: React.FC = () => {
@@ -29,6 +29,7 @@ const Profile: React.FC = () => {
 
   const { addToast } = useToast();
   const { user, updateUser } = useAuth();
+  const history = useHistory();
 
   const handleSubmit = useCallback(
     async (data: ProfileFormData) => {
@@ -41,36 +42,52 @@ const Profile: React.FC = () => {
             .email('E-mail inválido'),
           old_password: Yup.string().notRequired(),
           password: Yup.string().when('old_password', {
-            is: '',
-            then: Yup.string().notRequired(),
-            otherwise: Yup.string().required(
-              'Digite a nova senha para atualizar'
-            ),
+            is: val => !!val.length,
+            then: Yup.string().required(),
+            otherwise: Yup.string(),
           }),
-          // .required('Favor informar a nova senha')
-          // .min(6, 'No mínimo 6 dígitos'),
-          confirm_password: Yup.string().oneOf(
-            [Yup.ref('password'), null],
-            'Senha de confirmação não coincide com nova senha'
-          ),
+          password_confirmation: Yup.string()
+            .when('old_password', {
+              is: val => !!val.length,
+              then: Yup.string().required(),
+              otherwise: Yup.string(),
+            })
+            .oneOf([Yup.ref('password'), null], 'Confirmação incorreta'),
         });
 
         await schema.validate(data, {
           abortEarly: false,
         });
 
-        console.log(data);
+        const {
+          name,
+          email,
+          password,
+          password_confirmation,
+          old_password,
+        } = data;
+        const formData = {
+          name,
+          email,
+          ...(old_password
+            ? {
+                old_password,
+                password,
+                password_confirmation,
+              }
+            : {}),
+        };
+        const response = await api.put('profile', formData);
 
-        // const { name, email } = data;
-        // await api.put('profile', {
-        //   name,
-        // });
+        updateUser(response.data);
+
+        history.push('dashboard');
 
         addToast({
           type: 'sucess',
           title: 'Perfil atualizado',
           description:
-            'As informações de seu perfil foram atualizadas con sucesso',
+            'As informações de seu perfil foram atualizadas com sucesso',
         });
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
@@ -87,7 +104,7 @@ const Profile: React.FC = () => {
         });
       }
     },
-    [addToast]
+    [addToast, updateUser]
   );
 
   const handleAvatarChange = useCallback(
