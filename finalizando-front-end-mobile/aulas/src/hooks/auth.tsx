@@ -36,17 +36,19 @@ interface AuthContextData {
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export const AuthProvider: React.FC = ({ children }) => {
-  const [data, setData] = useState<AuthState>({} as AuthState);
+  const [data, setData] = useState({} as AuthState);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadStoredData(): Promise<void> {
       const [loggedUser, token] = await AsyncStorage.multiGet([
-        '@Gobarber:user',
-        '@Gobarber:token',
+        '@GoBarber:user',
+        '@GoBarber:token',
       ]);
 
       if (loggedUser[1] && token[1]) {
+        api.defaults.headers.authorization = `Bearer ${token[1]}`;
         setData({ user: JSON.parse(loggedUser[1]), token: token[1] });
       }
 
@@ -68,6 +70,8 @@ export const AuthProvider: React.FC = ({ children }) => {
       ['@GoBarber:user', JSON.stringify(user)],
       ['@GoBarber:token', token],
     ]);
+
+    api.defaults.headers.authorization = `Bearer ${token}`;
 
     setData({ user, token });
   }, []);
