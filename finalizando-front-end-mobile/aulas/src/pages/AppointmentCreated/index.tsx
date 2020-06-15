@@ -38,7 +38,7 @@ const AppointmentCreated: React.FC = () => {
         locale: ptBR,
       }
     );
-  }, [date]);
+  }, [date, provider_name]);
 
   return (
     <Container>
